@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="es" data-bs-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Garaje Virtual | Dashboard Pro</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        body {
+            transition: background-color 0.4s ease, color 0.4s ease;
+        }
+
+        [data-bs-theme="dark"] body {
+            background-color: #121212 !important;
+            color: #ffffff;
+        }
+        
+        [data-bs-theme="dark"] .card {
+            background-color: #1e1e1e;
+            border: 1px solid #333;
+        }
+
+        .card {
+            transition: transform 0.2s ease;
+        }
+        .card:hover {
+            transform: translateY(-3px);
+        }
+    </style>
+</head>
+<body class="bg-light">
+
+    <div class="container-fluid px-4 mt-5">
+        <div class="d-flex justify-content-between align-items-center mb-5">
+            <h1 class="fw-bold text-primary mb-0">
+                <i class="bi bi-ev-front"></i> Panel de Control Garaje
+            </h1>
+            <span class="badge bg-primary-subtle text-primary p-2">V 2.0 - Portafolio</span>
+        </div>
+
+        <div class="row">
+            <div class="col-lg-9">
+                
+                {% if alertas %}
+                <div class="alert alert-warning shadow-sm border-start border-5 border-warning mb-4" role="alert">
+                    <h4 class="alert-heading"><i class="bi bi-tools"></i> ¡Servicios Próximos!</h4>
+                    <p>Vehículos que requieren atención técnica (cada 10,000 km):</p>
+                    <hr>
+                    <ul class="mb-0">
+                        {% for coche in alertas %}
+                            <li><strong>{{ coche[1] }} {{ coche[2] }}</strong> - Kilometraje: {{ coche[4] }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endif %}
+
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <div class="card bg-primary text-white shadow-sm border-0 h-100">
+                            <div class="card-body d-flex align-items-center">
+                                <i class="bi bi-car-front fs-1 me-3"></i>
+                                <div>
+                                    <h6 class="mb-0">Total Vehículos</h6>
+                                    <h3 class="fw-bold mb-0">{{ stats[0] }}</h3>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card bg-success text-white shadow-sm border-0 h-100">
+                            <div class="card-body d-flex align-items-center">
+                                <i class="bi bi-speedometer2 fs-1 me-3"></i>
+                                <div>
+                                    <h6 class="mb-0">Promedio KM</h6>
+                                    <h3 class="fw-bold mb-0">{{ "%.1f"|format(stats[1] or 0) }} km</h3>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card shadow-sm mb-4 border-0">
+                    <div class="card-body p-4">
+                        <h5 class="card-title mb-3 fw-bold"><i class="bi bi-plus-circle text-primary"></i> Registrar Nuevo Vehículo</h5>
+                        <form action="/add" method="POST" class="row g-3">
+                            <div class="col-md-3">
+                                <input type="text" name="marca" class="form-control" placeholder="Marca (ej. Toyota)" required>
+                            </div>
+                            <div class="col-md-3">
+                                <input type="text" name="model" class="form-control" placeholder="Modelo (ej. Corolla)" required>
+                            </div>
+                            <div class="col-md-2">
+                                <input type="number" name="year" class="form-control" placeholder="Año" required>
+                            </div>
+                            <div class="col-md-2">
+                                <input type="number" step="0.1" name="km" class="form-control" placeholder="Kilometraje" required>
+                            </div>
+                            <div class="col-md-2">
+                                <button type="submit" class="btn btn-primary w-100 fw-bold">Agregar</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="card shadow border-0 mb-5">
+                    <div class="card-body p-0">
+                        <div class="d-flex justify-content-between align-items-center p-4">
+                            <h5 class="card-title mb-0 fw-bold">Inventario de Flota</h5>
+                            <div class="input-group input-group-sm" style="width: 300px;">
+                                <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
+                                <input type="text" id="buscador" class="form-control border-start-0" placeholder="Filtrar por marca o modelo...">
+                            </div>
+                        </div>
+                        
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th class="ps-4">ID</th>
+                                        <th>Marca</th>
+                                        <th>Modelo</th>
+                                        <th>Año</th>
+                                        <th>Kilometraje</th>
+                                        <th class="text-center pe-4">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for coche in lista_vehiculos %}
+                                    <tr>
+                                        <td class="ps-4"><span class="text-muted small">#{{ coche[0] }}</span></td>
+                                        <td><strong>{{ coche[1] }}</strong></td>
+                                        <td>{{ coche[2] }}</td>
+                                        <td>{{ coche[3] }}</td>
+                                        <td>
+                                            <span class="fw-semibold">{{ coche[4] }} km</span>
+                                            {% if coche[4] >= 200000 %}
+                                                <br><span class="badge rounded-pill bg-danger-subtle text-danger" style="font-size: 0.65rem;">
+                                                    <i class="bi bi-exclamation-triangle"></i> USO INTENSO
+                                                </span>
+                                            {% endif %}
+                                        </td>
+                                        <td class="text-center pe-4">
+                                            <div class="d-flex justify-content-center align-items-center gap-2">
+                                                <form action="/update_km/{{ coche[0] }}" method="POST" class="d-flex">
+                                                    <div class="input-group input-group-sm" style="width: 140px;">
+                                                        <input type="number" name="nuevo_km" class="form-control" placeholder="KM">
+                                                        <button type="submit" class="btn btn-warning"><i class="bi bi-arrow-clockwise"></i></button>
+                                                    </div>
+                                                </form>
+                                                <form action="/delete/{{ coche[0] }}" method="POST">
+                                                    <button type="submit" class="btn btn-outline-danger btn-sm" onclick="return confirm('¿Eliminar este registro?')">
+                                                        <i class="bi bi-trash3"></i>
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% if not lista_vehiculos %}
+                        <div class="p-5 text-center text-muted">
+                            <i class="bi bi-inbox fs-1"></i>
+                            <p class="mt-2">No se encontraron vehículos en la base de datos.</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-3">
+                <div class="sticky-top" style="top: 20px;">
+                    
+                    <div class="card shadow-sm border-0 mb-4 text-center">
+                        <div class="card-body">
+                            <h6 class="fw-bold mb-3"><i class="bi bi-palette me-2"></i>Apariencia</h6>
+                            <button class="btn btn-outline-secondary w-100" id="btn-dark-mode">
+                                <i class="bi bi-moon-stars-fill me-2"></i>Modo Oscuro
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="card shadow-sm mb-4 border-0">
+                        <div class="card-header bg-dark text-white fw-bold py-3">
+                            <i class="bi bi-shield-check me-2"></i>Sistema de Seguridad
+                        </div>
+                        <div class="card-body small">
+                            <p class="mb-2"><strong>Base de Datos:</strong> SQLite3</p>
+                            <p class="mb-2"><strong>Servidor:</strong> Flask (Python)</p>
+                            <p class="mb-0 text-muted">Los datos se guardan localmente en el archivo <code>garage.db</code>.</p>
+                        </div>
+                    </div>
+
+                    <div class="card shadow-sm border-0 mb-4 bg-primary text-white">
+                        <div class="card-body">
+                            <h6 class="fw-bold"><i class="bi bi-lightbulb"></i> Tip de Gestión</h6>
+                            <p class="small mb-0">Usa el buscador rápido arriba de la tabla para localizar cualquier vehículo instantáneamente por su marca o modelo.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        document.getElementById('buscador').addEventListener('keyup', function() {
+            let valor = this.value.toLowerCase();
+            let filas = document.querySelectorAll('tbody tr');
+            filas.forEach(fila => {
+                let texto = fila.textContent.toLowerCase();
+                fila.style.display = texto.includes(valor) ? '' : 'none';
+            });
+        });
+
+        const btnDark = document.getElementById('btn-dark-mode');
+        const htmlElement = document.documentElement;
+
+        btnDark.addEventListener('click', () => {
+            if (htmlElement.getAttribute('data-bs-theme') === 'dark') {
+                htmlElement.setAttribute('data-bs-theme', 'light');
+                btnDark.innerHTML = '<i class="bi bi-moon-stars-fill me-2"></i>Modo Oscuro';
+                btnDark.classList.replace('btn-outline-light', 'btn-outline-secondary');
+            } else {
+                htmlElement.setAttribute('data-bs-theme', 'dark');
+                btnDark.innerHTML = '<i class="bi bi-sun-fill me-2"></i>Modo Claro';
+                btnDark.classList.replace('btn-outline-secondary', 'btn-outline-light');
+            }
+        });
+    </script>
+</body>
+</html>
